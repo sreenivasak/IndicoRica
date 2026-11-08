@@ -29,6 +29,14 @@ describe("api v1", () => {
     expect(r.status).toBe(404);
     expect(((await r.json()) as any).error.code).toBe("not_found");
   });
+  it("unset DATA_SOURCE fails closed (no silent mock)", async () => {
+    const r = await get("/api/v1/public/system-info", undefined, {});
+    expect(r.status).toBe(500);
+  });
+  it("sends security headers", async () => {
+    const r = await get("/api/v1/health");
+    expect(r.headers.get("x-content-type-options")).toBe("nosniff");
+  });
   it("supabase mode without config returns structured 500", async () => {
     const r = await get("/api/v1/public/system-info", undefined, { DATA_SOURCE: "supabase" });
     expect(r.status).toBe(500);

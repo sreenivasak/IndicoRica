@@ -41,5 +41,7 @@ export function selectRepo(env: Env): SettingsRepo {
       throw new Error("DATA_SOURCE=supabase requires SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY");
     return supabaseRepo(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY);
   }
-  return mockRepo;
+  // Fail closed: an unset/typo'd DATA_SOURCE must not silently serve mock data in production.
+  if (env.DATA_SOURCE === "mock") return mockRepo;
+  throw new Error("DATA_SOURCE must be 'mock' or 'supabase'");
 }

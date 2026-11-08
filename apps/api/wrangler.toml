@@ -2,9 +2,15 @@ name = "indicorica-api"
 main = "src/index.ts"
 compatibility_date = "2026-11-01"
 
+# Dev defaults. Production MUST override these via [env.production.vars]
+# (real frontend origin only; never localhost) before deploying with --env production.
 [vars]
 DATA_SOURCE = "mock"
 ALLOWED_ORIGINS = "http://localhost:3000"
+
+[env.production.vars]
+DATA_SOURCE = "supabase"
+ALLOWED_ORIGINS = "https://REPLACE-ME.workers.dev"
 # For DATA_SOURCE=supabase: set SUPABASE_URL here and store the key with
 #   wrangler secret put SUPABASE_PUBLISHABLE_KEY
 # The publishable key is RLS-restricted; the service-role key is NOT used in this phase.

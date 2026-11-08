@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 import type { ApiError, HealthResponse, SystemInfoResponse } from "@indicorica/contracts";
 import { selectRepo, type Env } from "./settings";
 
@@ -16,6 +17,8 @@ export function createApp() {
     console.log(JSON.stringify({ level: "info", requestId, method: c.req.method,
       path: new URL(c.req.url).pathname, status: c.res.status, ms: Date.now() - start }));
   });
+
+  app.use("*", secureHeaders());
 
   // Restricted CORS: only origins listed in ALLOWED_ORIGINS get CORS headers. No wildcard, no credentials yet.
   app.use("/api/*", (c, next) => {
