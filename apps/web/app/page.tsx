@@ -1,6 +1,7 @@
 import { getSystemInfo } from "../lib/api";
 
-export const dynamic = "force-dynamic";
+// Cached for 60s so page views don't each hit the API (free-tier request limits).
+export const revalidate = 60;
 
 export default async function Home() {
   const info = await getSystemInfo();
