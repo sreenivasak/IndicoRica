@@ -8,10 +8,16 @@ compatibility_date = "2026-11-01"
 DATA_SOURCE = "mock"
 ALLOWED_ORIGINS = "http://localhost:3000"
 
+[env.production]
+name = "indicorica-api"   # keep the plain name; otherwise wrangler appends "-production"
+workers_dev = true
+preview_urls = false      # no extra public preview addresses
+
 [env.production.vars]
 DATA_SOURCE = "supabase"
-ALLOWED_ORIGINS = "https://REPLACE-ME.workers.dev"   # app refuses to serve while this contains REPLACE-ME
-SUPABASE_URL = "https://REPLACE-ME.supabase.co"        # same guard; key goes in `wrangler secret put SUPABASE_PUBLISHABLE_KEY`
+ALLOWED_ORIGINS = "https://indicorica-web.indicorica.workers.dev"
+SUPABASE_URL = "https://ctdegrdmcjtvtcbwzcob.supabase.co"
+# Key is stored as a secret, never here: wrangler secret put SUPABASE_PUBLISHABLE_KEY --env production
 # For DATA_SOURCE=supabase: set SUPABASE_URL here and store the key with
 #   wrangler secret put SUPABASE_PUBLISHABLE_KEY
 # The publishable key is RLS-restricted; the service-role key is NOT used in this phase.
