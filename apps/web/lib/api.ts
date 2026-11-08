@@ -6,7 +6,7 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; message: string 
 
 export async function getSystemInfo(): Promise<ApiResult<SystemInfoResponse>> {
   try {
-    const res = await fetch(`${BASE}/public/system-info`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/public/system-info`, { cache: "no-store" });
     if (!res.ok) return { ok: false, message: `API responded with status ${res.status}` };
     const parsed = SystemInfoResponse.safeParse(await res.json());
     if (!parsed.success) return { ok: false, message: "API response did not match the expected contract" };

@@ -1,7 +1,7 @@
 import { getSystemInfo } from "../lib/api";
 
-// Cached for 60s so page views don't each hit the API (free-tier request limits).
-export const revalidate = 60;
+// Dynamic on purpose: ISR on Workers needs a KV cache namespace. Revisit caching in phase 03.
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const info = await getSystemInfo();
