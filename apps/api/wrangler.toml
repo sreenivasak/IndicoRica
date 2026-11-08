@@ -10,7 +10,8 @@ ALLOWED_ORIGINS = "http://localhost:3000"
 
 [env.production.vars]
 DATA_SOURCE = "supabase"
-ALLOWED_ORIGINS = "https://REPLACE-ME.workers.dev"
+ALLOWED_ORIGINS = "https://REPLACE-ME.workers.dev"   # app refuses to serve while this contains REPLACE-ME
+SUPABASE_URL = "https://REPLACE-ME.supabase.co"        # same guard; key goes in `wrangler secret put SUPABASE_PUBLISHABLE_KEY`
 # For DATA_SOURCE=supabase: set SUPABASE_URL here and store the key with
 #   wrangler secret put SUPABASE_PUBLISHABLE_KEY
 # The publishable key is RLS-restricted; the service-role key is NOT used in this phase.

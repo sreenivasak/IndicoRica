@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import type { ApiError, HealthResponse, SystemInfoResponse } from "@indicorica/contracts";
-import { selectRepo, type Env } from "./settings";
+import { selectRepo, validateEnv, type Env } from "./settings";
 
 type Vars = { requestId: string };
 
@@ -18,7 +18,10 @@ export function createApp() {
       path: new URL(c.req.url).pathname, status: c.res.status, ms: Date.now() - start }));
   });
 
-  app.use("*", secureHeaders());
+  // JSON API consumed cross-origin via CORS: CORP must be cross-origin or it fights the CORS allowlist;
+  // framing is irrelevant for JSON so DENY is the safe, consistent choice.
+  app.use("*", secureHeaders({ crossOriginResourcePolicy: "cross-origin", xFrameOptions: "DENY",
+    strictTransportSecurity: "max-age=31536000; includeSubDomains" }));
 
   // Restricted CORS: only origins listed in ALLOWED_ORIGINS get CORS headers. No wildcard, no credentials yet.
   app.use("/api/*", (c, next) => {
@@ -30,7 +33,7 @@ export function createApp() {
     })(c, next);
   });
 
-  app.get("/api/v1/health", (c) => c.json<HealthResponse>({ status: "ok", time: new Date().toISOString() }));
+  app.get("/api/v1/health", (c) => (validateEnv(c.env ?? {}), c.json<HealthResponse>({ status: "ok", time: new Date().toISOString() })));
 
   app.get("/api/v1/public/system-info", async (c) => {
     const repo = selectRepo(c.env ?? {});

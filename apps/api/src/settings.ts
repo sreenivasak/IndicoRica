@@ -35,7 +35,18 @@ export function supabaseRepo(url: string, key: string): SettingsRepo {
   };
 }
 
+/** Throws on misconfiguration. Called by /health too, so bad config can't pass health checks. */
+export function validateEnv(env: Env): void {
+  if (env.DATA_SOURCE !== "mock" && env.DATA_SOURCE !== "supabase")
+    throw new Error("DATA_SOURCE must be 'mock' or 'supabase'");
+  for (const [k, v] of Object.entries(env))
+    if (typeof v === "string" && v.includes("REPLACE-ME")) throw new Error(`${k} still contains a placeholder`);
+  if (env.DATA_SOURCE === "supabase" && (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY))
+    throw new Error("DATA_SOURCE=supabase requires SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY");
+}
+
 export function selectRepo(env: Env): SettingsRepo {
+  validateEnv(env);
   if (env.DATA_SOURCE === "supabase") {
     if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY)
       throw new Error("DATA_SOURCE=supabase requires SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY");

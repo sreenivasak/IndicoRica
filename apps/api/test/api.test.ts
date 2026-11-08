@@ -33,6 +33,11 @@ describe("api v1", () => {
     const r = await get("/api/v1/public/system-info", undefined, {});
     expect(r.status).toBe(500);
   });
+  it("health fails on bad config and on placeholder values", async () => {
+    expect((await get("/api/v1/health", undefined, {})).status).toBe(500);
+    const p = { DATA_SOURCE: "supabase", SUPABASE_URL: "https://REPLACE-ME.supabase.co", SUPABASE_PUBLISHABLE_KEY: "k" };
+    expect((await get("/api/v1/health", undefined, p)).status).toBe(500);
+  });
   it("sends security headers", async () => {
     const r = await get("/api/v1/health");
     expect(r.headers.get("x-content-type-options")).toBe("nosniff");
