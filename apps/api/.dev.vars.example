@@ -1,0 +1,5 @@
+# Copy to .dev.vars (gitignored). Placeholders only.
+DATA_SOURCE=mock
+ALLOWED_ORIGINS=http://localhost:3000
+SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_KEY

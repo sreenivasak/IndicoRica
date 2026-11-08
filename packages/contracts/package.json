@@ -1,0 +1,11 @@
+{
+  "name": "@indicorica/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": { "typecheck": "tsc --noEmit", "test": "echo no tests" },
+  "dependencies": { "zod": "4.6.7" },
+  "devDependencies": { "typescript": "~5.9.3" }
+}
