@@ -19,3 +19,4 @@ export const SystemInfoResponse = z.object({
   apiVersion: z.literal("v1"),
 });
 export type SystemInfoResponse = z.infer<typeof SystemInfoResponse>;
+export * from "./data";
