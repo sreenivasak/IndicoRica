@@ -461,3 +461,73 @@ describe("contracts and seed", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe("MFA: staff roles need an aal2 session", () => {
+  const aal1 = { aal: "aal1" as const };
+  it("editor without MFA cannot publish, see drafts, or use editor-only data", async () => {
+    const rs = await as(db, "editor", [
+      "select slug from public.articles",
+      "update public.articles set status = 'published' where slug = 'demo-draft'",
+      "select count(*)::int as n from public.moderation_queue",
+    ], aal1);
+    expect(rs[0].rows.map((r: any) => r.slug)).toEqual(["demo-published"]);
+    expect(rs[1].ok === false || rs[1].affected === 0).toBe(true);
+    expect(rs[2].rows[0].n).toBe(0);
+  });
+  it("super admin without MFA cannot grant roles or read the audit log", async () => {
+    const rs = await as(db, "superAdmin", [
+      [`insert into public.user_roles(user_id, role) values ($1, 'editor')`, [ids.member]],
+      "select * from public.audit_log",
+    ], aal1);
+    expect(rs[0].ok).toBe(false);
+    expect(rs[1].rows).toHaveLength(0);
+  });
+  it("ad manager without MFA cannot touch ads", async () => {
+    const r = await one(db, "adManager", "update public.ad_settings set ads_enabled = false", [], aal1);
+    expect(denied(r)).toBe(true);
+  });
+  it("a staff member can still read their own role rows without MFA (so the app can ask them to enroll)", async () => {
+    const r = await one(db, "editor", "select role from public.user_roles", [], aal1);
+    expect(r.rows.map((x: any) => x.role)).toEqual(["editor"]);
+    const h = await one(db, "editor", "select private.holds_any_role() as h", [], aal1);
+    expect(h.rows[0].h).toBe(true);
+    const m = await one(db, "member", "select private.holds_any_role() as h", [], aal1);
+    expect(m.rows[0].h).toBe(false);
+  });
+  it("members and owners are unaffected by aal1", async () => {
+    const r = await one(db, "owner", "update public.businesses set description = 'ok' where id = $1", [biz.a], aal1);
+    expect(r.affected).toBe(1);
+  });
+  it("an unknown or missing aal claim is treated as not verified", async () => {
+    await db.exec("begin; set local role authenticated;");
+    await db.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: ids.editor })]);
+    const r = await db.query("select private.is_editor() as e");
+    await db.exec("rollback");
+    expect(r.rows[0].e).toBe(false);
+  });
+});
+
+describe("first super admin bootstrap (documented SQL)", () => {
+  const sql = `insert into public.user_roles (user_id, role)
+    select id, 'super_admin' from auth.users where email = $1
+      and not exists (select 1 from public.user_roles where role = 'super_admin')`;
+  it("does nothing when a super admin already exists", async () => {
+    const r = await as(db, "postgres", [[sql, ["member@example.test"]]]);
+    expect(r[0].affected).toBe(0);
+  });
+  it("creates the first super admin when none exists, and is audited", async () => {
+    await db.query("begin");
+    await db.query("delete from public.user_roles where role = 'super_admin'");
+    const r = await db.query(sql, ["member@example.test"]);
+    const again = await db.query(sql, ["owner@example.test"]);
+    const audit = await db.query("select count(*)::int as n from public.audit_log where table_name = 'user_roles' and action = 'INSERT'");
+    await db.query("rollback");
+    expect(r.affectedRows).toBe(1);
+    expect(again.affectedRows).toBe(0);
+    expect(audit.rows[0].n).toBeGreaterThan(0);
+  });
+  it("the browser-reachable roles cannot run it (no privilege on auth.users)", async () => {
+    const r = await as(db, "member", [[sql, ["member@example.test"]]]);
+    expect(denied(r[0])).toBe(true);
+  });
+});

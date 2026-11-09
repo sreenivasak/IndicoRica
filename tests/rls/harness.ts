@@ -72,14 +72,17 @@ export type Result = { ok: boolean; error?: string; code?: string; rows: any[]; 
  * so tests never affect each other. Each statement gets a savepoint, so one denied
  * statement does not abort the rest. Returns one Result per statement.
  */
-export async function as(db: PGlite, actor: Actor, statements: (string | [string, any[]])[]): Promise<Result[]> {
+export async function as(
+  db: PGlite, actor: Actor, statements: (string | [string, any[]])[], opts: { aal?: "aal1" | "aal2" } = {},
+): Promise<Result[]> {
   const out: Result[] = [];
   await db.exec("begin");
   try {
     if (actor === "anon") await db.exec("set local role anon");
     else if (actor !== "postgres") {
       await db.exec("set local role authenticated");
-      await db.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[actor]]);
+      await db.query("select set_config('request.jwt.claims', $1, true)",
+        [JSON.stringify({ sub: ids[actor], role: "authenticated", aal: opts.aal ?? "aal2" })]);
     }
     for (const s of statements) {
       const [sql, params] = typeof s === "string" ? [s, []] : s;
@@ -99,8 +102,10 @@ export async function as(db: PGlite, actor: Actor, statements: (string | [string
   return out;
 }
 
-export async function one(db: PGlite, actor: Actor, sql: string, params: any[] = []): Promise<Result> {
-  return (await as(db, actor, [[sql, params]]))[0];
+export async function one(
+  db: PGlite, actor: Actor, sql: string, params: any[] = [], opts: { aal?: "aal1" | "aal2" } = {},
+): Promise<Result> {
+  return (await as(db, actor, [[sql, params]], opts))[0];
 }
 
 /** A write is "denied" if it errored or touched no rows (RLS filters silently on UPDATE/DELETE). */

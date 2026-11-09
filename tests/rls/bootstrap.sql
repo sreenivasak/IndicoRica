@@ -27,3 +27,8 @@ grant select on storage.buckets to anon, authenticated;
 -- Supabase hands new public tables to API roles by default; mimic that so our revokes are really tested.
 alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges for role postgres in schema public grant all on functions to anon, authenticated, service_role;
+
+-- auth.jwt(): claims of the current request (Supabase provides this).
+create function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
+grant execute on function auth.jwt() to anon, authenticated;

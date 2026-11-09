@@ -6,3 +6,5 @@ onlyBuiltDependencies:
   - esbuild
   - workerd
   - sharp
+overrides:
+  fflate: '>=0.7.5'

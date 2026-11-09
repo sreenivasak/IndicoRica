@@ -58,3 +58,19 @@ export type AvailabilityEvidence = z.infer<typeof AvailabilityEvidence>;
 
 /** Shown beside any sponsored placement. Never hide or reword. */
 export const AdDisclosure = z.enum(["Sponsored", "Ad", "Advertisement"]);
+
+// ---------------------------------------------------------------- auth API (phase 04)
+export const MeResponse = z.object({
+  user: z.object({ id: z.string().uuid(), email: z.string().nullable() }),
+  roles: z.array(AppRole),
+  aal: z.enum(["aal1", "aal2"]),
+});
+export type MeResponse = z.infer<typeof MeResponse>;
+
+export const FavoriteList = z.object({
+  favorites: z.array(z.object({ businessId: z.string().uuid(), slug: z.string().nullable(), name: z.string().nullable() })),
+});
+export type FavoriteList = z.infer<typeof FavoriteList>;
+
+export const AdminStatus = z.object({ roles: z.array(AppRole), mfaVerified: z.literal(true) });
+export type AdminStatus = z.infer<typeof AdminStatus>;
